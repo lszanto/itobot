@@ -8,8 +8,17 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/lszanto/itobot/status"
 	"github.com/nlopes/slack"
 )
+
+type msg struct {
+	body        string
+	forBot      bool
+	hasWhere    bool
+	hasTomorrow bool
+	hasToday    bool
+}
 
 func main() {
 	dbFile := getenv("DBFILE")
@@ -41,23 +50,21 @@ Loop:
 					continue
 				}
 
+				msg := parseMessagetext(messageText, botID)
+
 				outGoingMessage := ""
 
-				if ev.User != info.User.ID && strings.HasPrefix(messageText, botID) && strings.Contains(messageText, "where") {
+				if msg.forBot && msg.hasWhere {
 					bucket := time.Now().Format("02.01.2006")
-					if strings.Contains(messageText, "tomorrow") {
+					if msg.hasTomorrow {
 						bucket = time.Now().AddDate(0, 0, 1).Format("02.01.2006")
 					}
 
 					outGoingMessage = status.GetLocationsFromBucket(db, bucket)
-				} else if strings.Contains(messageText, "tomorrow") {
+				} else if msg.hasTomorrow {
 					status.AddStatusTomorrow(db, user.Profile.DisplayNameNormalized, strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(strings.Replace(messageText, botID, "", 1)), "tomorrow", "")))
-
-					outGoingMessage = "Thanks for letting us know <@" + ev.User + ">"
-				} else if strings.Contains(messageText, "today") {
+				} else if msg.hasToday {
 					status.AddStatusToday(db, user.Profile.DisplayNameNormalized, strings.TrimSpace(strings.ReplaceAll(strings.TrimSpace(strings.Replace(messageText, botID, "", 1)), "today", "")))
-
-					outGoingMessage = "Thanks for letting us know <@" + ev.User + ">"
 				} else {
 					continue
 				}
@@ -88,4 +95,14 @@ func getenv(name string) string {
 	}
 
 	return v
+}
+
+func parseMessagetext(messageText string, botID string) msg {
+	return msg{
+		body:        messageText,
+		forBot:      strings.HasPrefix(messageText, botID),
+		hasWhere:    strings.Contains(messageText, "where"),
+		hasTomorrow: strings.Contains(messageText, "tomorrow"),
+		hasToday:    strings.Contains(messageText, "today"),
+	}
 }
