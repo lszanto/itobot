@@ -44,13 +44,12 @@ Loop:
 				info := rtm.GetInfo()
 				botID := "<@" + strings.ToLower(info.User.ID) + ">"
 				messageText := strings.TrimSpace(strings.ToLower(ev.Text))
+				msg := parseMessagetext(messageText, botID)
 
 				user, err := api.GetUserInfo(ev.User)
 				if err != nil {
 					continue
 				}
-
-				msg := parseMessagetext(messageText, botID)
 
 				outGoingMessage := ""
 
