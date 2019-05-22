@@ -19,17 +19,6 @@ func AddStatusToday(db *bolt.DB, user string, location string) {
 	addStatusToBucket(db, user, location, bucket)
 }
 
-func addStatusToBucket(db *bolt.DB, user string, location string, bucket string) {
-	checkCreateBucket(db, bucket)
-
-	db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(bucket))
-		err := b.Put([]byte(user), []byte(location))
-
-		return err
-	})
-}
-
 // GetLocationsFromBucket returns a list of what people are doing from a given bucket
 func GetLocationsFromBucket(db *bolt.DB, bucket string) string {
 	checkCreateBucket(db, bucket)
@@ -54,6 +43,17 @@ func GetLocationsFromBucket(db *bolt.DB, bucket string) string {
 	}
 
 	return locations
+}
+
+func addStatusToBucket(db *bolt.DB, user string, location string, bucket string) {
+	checkCreateBucket(db, bucket)
+
+	db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucket))
+		err := b.Put([]byte(user), []byte(location))
+
+		return err
+	})
 }
 
 func checkCreateBucket(db *bolt.DB, bucket string) {
